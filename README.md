@@ -59,7 +59,7 @@ For uploads, "Check as of" defaults to today. The sample folder pins it to 2026-
 | `GEMINI_API_KEY` | required (Google AI Studio, free tier) |
 | `GEMINI_MODEL` | default `gemini-3.6-flash` |
 | `GROQ_API_KEY` | optional backup (console.groq.com) |
-| `GROQ_MODEL` | default `openai/gpt-oss-120b` |
+| `GROQ_MODEL` | default `qwen/qwen3.8-27b` |
 | `GEMINI_THINKING` | optional thinking level, default `low` |
 
 Never commit keys. For local runs put them in `.env.local` (gitignored).
