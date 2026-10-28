@@ -5,6 +5,7 @@
   "type": "module",
   "description": "Ask the Brain: proof of concept (source-of-truth hierarchy + grounded chat)",
   "scripts": {
+    "dev": "node tools/dev-server.mjs",
     "test": "node --test tests/*.test.js"
   }
 }

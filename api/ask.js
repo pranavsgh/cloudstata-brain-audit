@@ -4,6 +4,8 @@ import { LIMITS, parseDate, byteLength, checkLimits, auditFolder, buildContext, 
 
 const GEMINI_TIMEOUT_MS = 18000, GROQ_TIMEOUT_MS = 12000;
 const RATE_MAX = 20, RATE_WINDOW_MS = 10 * 60 * 1000;
+const DAILY_MAX = 400; // total model calls per instance per 24h: a circuit breaker if many IPs hit at once
+let daily = { day: "", n: 0 };
 const hits = new Map(); // ip -> timestamps. Per-instance memory only: fine for a demo, not a real limiter.
 
 function rateLimited(ip, now = Date.now()) {
@@ -13,7 +15,20 @@ function rateLimited(ip, now = Date.now()) {
   if (hits.size > 5000) for (const [k, v] of hits) if (!v.some(t => now - t < RATE_WINDOW_MS)) hits.delete(k);
   return false;
 }
-export function _resetRateLimit() { hits.clear(); }
+function overDailyCap(now = new Date()) {
+  const day = now.toISOString().slice(0, 10);
+  if (daily.day !== day) daily = { day, n: 0 };
+  return ++daily.n > DAILY_MAX;
+}
+export function _resetRateLimit() { hits.clear(); daily = { day: "", n: 0 }; }
+
+// Only our own page should call this. Browsers always send Sec-Fetch-Site/Origin on fetch(); bots and
+// scripts usually don't, or send a foreign one. (Headers can be forged, so this blocks casual abuse, not a determined attacker.)
+export function sameSiteRequest(headers) {
+  const site = headers["sec-fetch-site"], origin = headers["origin"], host = headers["host"];
+  if (origin) { try { return new URL(origin).host === host; } catch { return false; } }
+  return site === "same-origin";
+}
 
 const bad = message => ({ status: 400, json: { error: message } });
 
@@ -72,6 +87,7 @@ async function askGroq({ key, model, system, history, question }) {
 export async function handleAsk({ body, ip = "unknown" }) {
   const err = validate(body);
   if (err) return bad(err);
+  if (overDailyCap()) return { status: 503, json: { error: "The demo has reached its daily limit. Please try again tomorrow." } };
   if (rateLimited(ip)) return { status: 429, json: { error: "You've asked a lot of questions in a short time. Please wait a few minutes and try again." } };
 
   const limitErr = checkLimits(body.files);
@@ -119,6 +135,8 @@ export async function handleAsk({ body, ip = "unknown" }) {
 export default async function handler(req, res) {
   res.setHeader("cache-control", "no-store");
   if (req.method !== "POST") { res.setHeader("allow", "POST"); return res.status(405).json({ error: "Use POST." }); }
+  if (!sameSiteRequest(req.headers)) return res.status(403).json({ error: "This endpoint only works from the Ask the Brain page." });
+  if (!String(req.headers["content-type"] || "").includes("application/json")) return res.status(415).json({ error: "Send JSON." });
   let body = req.body;
   if (typeof body === "string") { try { body = JSON.parse(body); } catch { body = null; } }
   const ip = String(req.headers["x-forwarded-for"] || req.socket?.remoteAddress || "unknown").split(",")[0].trim();

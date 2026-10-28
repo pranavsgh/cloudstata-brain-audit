@@ -15,6 +15,13 @@ v1 does not use one. In real Gemini Enterprise, Google's built-in, permission-aw
 ## Security model
 The browser only sends raw files. `api/ask.js` re-runs the parse, audit and `buildContext` itself, so a doc blocked for security (client data shared "anyone with link"), archived, duplicated or superseded never reaches the model, even if a request is tampered with. Keys live only in server env vars.
 
+## Abuse protection
+- Keys are server-side only; the free-tier Gemini key has no billing account attached, so it cannot charge you.
+- `/api/ask` only accepts requests from the site's own page (same-origin check), JSON only, and caps input size.
+- Per-IP limit (20 questions / 10 min) and a global daily cap (400 model calls per instance). Both are in-memory per instance: fine for a demo, not a hardened limiter.
+- Security headers (CSP, nosniff, frame deny) in `vercel.json`; `robots.txt` asks crawlers to skip `/api/`.
+- The Origin check can be forged by a determined attacker; rotate the key if you ever see unexpected usage.
+
 ## Doc header format
 ```
 ---

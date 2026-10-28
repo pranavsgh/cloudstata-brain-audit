@@ -3,7 +3,7 @@ import test, { beforeEach } from "node:test";
 import assert from "node:assert/strict";
 import { auditFolder, buildContext, parseDate } from "../brain.js";
 import { SAMPLE_FILES } from "../sample-drive.js";
-import { handleAsk, _resetRateLimit } from "../api/ask.js";
+import { handleAsk, _resetRateLimit, sameSiteRequest } from "../api/ask.js";
 
 const body = (over = {}) => ({ files: SAMPLE_FILES, asOf: "2026-10-28", question: "What do we charge for 300 seats?", history: [], ...over });
 const ok = (j) => ({ ok: true, status: 200, json: async () => j, text: async () => JSON.stringify(j) });
@@ -104,4 +104,20 @@ test("rate limit: 21st question in a window gets 429", async () => {
   for (let i = 0; i < 20; i++) assert.equal((await handleAsk({ body: body(), ip: "1.1.1.1" })).status, 200);
   assert.equal((await handleAsk({ body: body(), ip: "1.1.1.1" })).status, 429);
   assert.equal((await handleAsk({ body: body(), ip: "2.2.2.2" })).status, 200);
+});
+
+test("only same-site browser requests are accepted by the HTTP wrapper", () => {
+  assert.ok(sameSiteRequest({ origin: "https://brain.vercel.app", host: "brain.vercel.app" }));
+  assert.ok(sameSiteRequest({ "sec-fetch-site": "same-origin", host: "x" }));
+  assert.ok(!sameSiteRequest({ origin: "https://evil.example", host: "brain.vercel.app" }));
+  assert.ok(!sameSiteRequest({ host: "brain.vercel.app" }));            // curl / bots: no origin headers
+  assert.ok(!sameSiteRequest({ "sec-fetch-site": "cross-site", host: "x" }));
+});
+
+test("daily circuit breaker stops model calls", async () => {
+  process.env.GEMINI_API_KEY = "k"; mock(() => geminiOk("x"));
+  let last;
+  for (let i = 0; i < 401; i++) last = await handleAsk({ body: body(), ip: "ip" + i });
+  assert.equal(last.status, 503); assert.match(last.json.error, /daily limit/);
+  assert.equal(calls.length, 400);
 });
