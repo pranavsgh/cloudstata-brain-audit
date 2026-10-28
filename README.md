@@ -72,3 +72,6 @@ Never commit keys. For local runs put them in `.env.local` (gitignored).
 2. vercel.com → Add New → Project → import the repo. No build settings needed (static page + `api/`).
 3. Settings → Environment Variables: add `GEMINI_API_KEY` (and `GROQ_API_KEY`) for Production, then redeploy.
 4. Open the URL in a private window: it loads with no sign-in.
+
+## License
+All rights reserved. Shared for evaluation only; see [LICENSE](LICENSE). No permission is granted to copy, deploy or reuse this code.
