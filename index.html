@@ -270,7 +270,7 @@ function showSeen(used, excluded) {
 
 // ---- chat -------------------------------------------------------------
 function renderAnswer(text, ids) {
-  const lines = esc(text).split(/\n+/).filter(l => l.trim());
+  const lines = esc(text.replace(/【/g, "[").replace(/】/g, "]")).split(/\n+/).filter(l => l.trim());
   return lines.map(l => {
     let x = l.replace(/\*\*(.+?)\*\*/g, "<b>$1</b>");
     x = x.replace(/\[([^\]\n]{1,200})\]/g, (m, inner) => ids.some(id => inner.trim().startsWith(id)) ? `<span class="chip cite">${inner}</span>` : m);

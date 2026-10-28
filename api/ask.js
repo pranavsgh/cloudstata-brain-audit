@@ -75,7 +75,7 @@ async function askGroq({ key, model, system, history, question }) {
   const messages = [{ role: "system", content: system }, ...history.map(h => ({ role: h.role, content: h.text })), { role: "user", content: question }];
   const r = await timedFetch("https://api.groq.com/openai/v1/chat/completions",
     { method: "POST", headers: { "content-type": "application/json", authorization: `Bearer ${key}` },
-      body: JSON.stringify({ model, messages, temperature: 0.2, max_tokens: 900 }) }, GROQ_TIMEOUT_MS);
+      body: JSON.stringify({ model, messages, temperature: 0.2, max_tokens: 900, ...(model.startsWith("openai/gpt-oss") ? { reasoning_effort: "low" } : {}) }) }, GROQ_TIMEOUT_MS);
   if (!r.ok) { const e = new Error(`Groq HTTP ${r.status}`); e.status = r.status; e.detail = (await r.text().catch(() => "")).slice(0, 500); throw e; }
   const j = await r.json();
   const text = (j?.choices?.[0]?.message?.content || "").trim();
@@ -122,7 +122,7 @@ export async function handleAsk({ body, ip = "unknown" }) {
   } else fallbackReason = "Gemini not configured";
 
   if (groqKey) {
-    const model = process.env.GROQ_MODEL || "llama-3.3-70b-versatile";
+    const model = process.env.GROQ_MODEL || "openai/gpt-oss-120b";
     try {
       const answer = await askGroq({ key: groqKey, model, ...args });
       return { status: 200, json: { answer, provider: "groq", model, usedDocs, excludedDocs, fallbackReason } };
