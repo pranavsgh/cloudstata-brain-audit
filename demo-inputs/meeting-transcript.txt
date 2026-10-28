@@ -1,0 +1,11 @@
+Meeting transcript: Lakeshore Dental x Cloudasta, weekly sync (Oct 20)
+
+Marcus: Okay, quick one today. Archive migration started over the weekend, about 40% done.
+Dana: Great. Did we lock the training dates?
+Marcus: Not yet. I'll send options by Wednesday.
+Priya: Heads up, two offices still have shared mailboxes nobody owns. Someone should decide whether we keep them.
+Dana: Let's keep the front-desk ones and archive the rest. That's decided.
+Marcus: Got it. We also need someone to test Gemini with the front desk at the Evanston office before the pilot.
+Dana: Hmm, maybe Jordan? I'll ask.
+Priya: I can update the user list again by Friday once the mailboxes are sorted.
+Marcus: Perfect. Same time next week.

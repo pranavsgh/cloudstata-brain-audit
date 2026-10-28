@@ -1,0 +1,10 @@
+{
+  "name": "brain-audit",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Ask the Brain: proof of concept (source-of-truth hierarchy + grounded chat)",
+  "scripts": {
+    "test": "node --test tests/*.test.js"
+  }
+}

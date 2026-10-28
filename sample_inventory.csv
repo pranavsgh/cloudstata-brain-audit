@@ -1,0 +1,14 @@
+doc_id,title,type,topic,owner,last_modified,last_reviewed,status,sharing,client_data,has_decision
+D01,Pricing Framework 2026,doc,Pricing,ceo@cloudasta.com,2026-03-02,2026-03-02,canonical,domain,no,no
+D02,Copy of Pricing Framework 2026,doc,Pricing,sales1@cloudasta.com,2026-04-11,,draft,domain,no,no
+D03,Pricing Framework 2024 FINAL,pdf,Pricing,ceo@cloudasta.com,2024-01-15,,legacy,domain,no,no
+D04,Leadership sync - pricing change (Meet transcript),transcript,Pricing,ops@cloudasta.com,2026-10-14,,draft,restricted,no,yes
+D05,GE Migration SOP,doc,Migration SOP,eng-lead@cloudasta.com,2025-06-10,2025-06-10,canonical,domain,no,no
+D06,GE Migration SOP v2 (working),doc,Migration SOP,eng2@cloudasta.com,2026-09-20,,draft,domain,no,no
+D07,Acme Corp QBR notes Q3,doc,Acme QBR,am1@cloudasta.com,2026-09-30,2026-09-30,canonical,anyone_link,yes,no
+D08,Acme Corp QBR deck Q3,slides,Acme QBR,am1@cloudasta.com,2026-09-28,,draft,domain,yes,no
+D09,Proposal template - Workspace migration,slides,Proposal template,sales1@cloudasta.com,2026-07-01,,draft,domain,no,no
+D10,Proposal template - Workspace migration (1),slides,Proposal template,sales2@cloudasta.com,2026-05-12,,draft,domain,no,no
+D11,Onboarding checklist 2023,doc,Onboarding,hr@cloudasta.com,2023-02-01,,archived,domain,no,no
+D12,Onboarding checklist,doc,Onboarding,hr@cloudasta.com,2026-08-15,2026-08-15,canonical,domain,no,no
+D13,All-hands Meet transcript Sept,transcript,Onboarding,ceo@cloudasta.com,2026-09-05,,draft,domain,no,no

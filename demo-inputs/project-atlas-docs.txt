@@ -1,0 +1,30 @@
+=== DOC 1: Project Atlas – Project Brief (last updated Sep 8) ===
+Client: Lakeshore Dental Group (14 offices, 180 staff)
+Goal: Migrate from Microsoft 365 to Google Workspace and roll out Gemini.
+Scope: Email, calendar, Drive migration; 2 training sessions; Gemini pilot for front-desk staff.
+Budget: $40,000 approved by Dana Ruiz (COO).
+Target go-live: November 14.
+Project lead: Marcus Lee (Cloudasta). Client contact: Dana Ruiz.
+
+=== DOC 2: Kickoff Meeting Notes (Sep 15) ===
+Attendees: Marcus Lee, Dana Ruiz, Priya Shah (Lakeshore IT)
+- Decided: migrate the 3 largest offices first as a pilot wave.
+- Decided: Priya owns user list cleanup, due Sep 29.
+- Open: does Lakeshore need email archive older than 7 years migrated? Dana to check with compliance.
+- Marcus to send training schedule by Sep 22.
+
+=== DOC 3: Status Meeting Notes (Oct 13) ===
+Attendees: Marcus Lee, Dana Ruiz
+- Compliance confirmed: 7+ year email archive MUST be migrated.
+- Because of the archive, Dana approved increasing the budget to $45,000.
+- Go-live moved to December 5 to allow archive migration.
+- Someone needs to book the training rooms at the 3 pilot offices. (no owner assigned)
+- Priya's user list cleanup is done.
+
+=== DOC 4: Budget Tracker (sheet export, last edited Sep 10) ===
+Item | Cost
+Migration services | $24,000
+Training (2 sessions) | $6,000
+Gemini pilot setup | $7,000
+Contingency | $3,000
+TOTAL | $40,000

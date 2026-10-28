@@ -1,0 +1,337 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ask the Brain</title>
+<meta name="description" content="Proof of concept: a source-of-truth hierarchy over a fictional Drive folder, plus a grounded Q&A chat.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --navy: #0A0E31; --teal: #00A3C4; --teal-soft: #E3F5F9;
+  --bg: #F6F7F9; --card: #FFFFFF; --ink: #1F2433; --muted: #6B7280; --rule: #E2E6EC;
+  --red: #C2362B; --red-soft: #FBEBEB; --amber: #A86A00; --amber-soft: #FBF1DC;
+  --green: #1E7D4F; --green-soft: #E5F4E4; --chip: #EEF1F5;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0D1020; --card: #151A30; --ink: #E7E9F2; --muted: #9AA1B5; --rule: #262C46;
+    --teal-soft: #0F2E3A; --red-soft: #3A1A1D; --amber-soft: #3A2C10; --green-soft: #12301F; --chip: #20263F;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0D1020; --card: #151A30; --ink: #E7E9F2; --muted: #9AA1B5; --rule: #262C46;
+  --teal-soft: #0F2E3A; --red-soft: #3A1A1D; --amber-soft: #3A2C10; --green-soft: #12301F; --chip: #20263F;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 400 14px/1.55 Poppins, system-ui, sans-serif; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 0 16px; }
+header.hero { background: var(--navy); color: #fff; padding: 36px 0 30px; }
+.eyebrow { font-size: 11px; font-weight: 600; letter-spacing: .08em; color: var(--teal); text-transform: uppercase; }
+h1 { font-weight: 600; font-size: clamp(26px, 4vw, 36px); margin: 6px 0 6px; line-height: 1.15; }
+.lead { color: #C9CEE3; font-weight: 300; max-width: 640px; margin: 0 0 22px; }
+.controls { display: flex; flex-wrap: wrap; gap: 10px; align-items: end; }
+.field { display: flex; flex-direction: column; gap: 4px; }
+.field label { font-size: 11px; font-weight: 600; letter-spacing: .06em; color: var(--teal); text-transform: uppercase; }
+input[type=date] { font: inherit; padding: 8px 10px; border-radius: 8px; border: 1px solid #3A4066; background: #141a45; color: #fff; color-scheme: dark; }
+button, .btn { font: 500 14px Poppins, system-ui, sans-serif; border-radius: 8px; padding: 9px 16px; cursor: pointer; border: 1px solid transparent; }
+.btn-primary { background: var(--teal); color: #04212A; }
+.btn-primary:hover { filter: brightness(1.08); }
+.btn-ghost { background: transparent; color: #fff; border-color: #3A4066; }
+.btn-ghost:hover { border-color: var(--teal); }
+.btn-plain { background: var(--card); color: var(--ink); border-color: var(--rule); }
+.btn-plain:hover { border-color: var(--teal); }
+input[type=file] { display: none; }
+main { padding: 24px 0 48px; }
+.empty { background: var(--card); border: 1px dashed var(--rule); border-radius: 12px; padding: 28px; text-align: center; color: var(--muted); }
+.error { background: var(--red-soft); color: var(--red); border-radius: 10px; padding: 12px 16px; margin-bottom: 16px; white-space: pre-wrap; }
+.note { background: var(--amber-soft); color: var(--amber); border-radius: 10px; padding: 10px 16px; margin-bottom: 16px; font-size: 13px; }
+.meta { color: var(--muted); font-size: 13px; margin: 4px 0 14px; }
+.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 24px; }
+.tile { background: var(--card); border: 1px solid var(--rule); border-radius: 12px; padding: 14px 16px; }
+.tile .n { font-size: 28px; font-weight: 600; line-height: 1.1; }
+.tile .l { font-size: 12px; color: var(--muted); }
+.tile.alert .n { color: var(--red); }
+.tile.good .n { color: var(--green); }
+h2 { font-size: 18px; font-weight: 600; margin: 28px 0 10px; }
+h2 small { font-weight: 400; color: var(--muted); font-size: 13px; margin-left: 6px; }
+.todo { display: grid; gap: 8px; }
+.todo-item { background: var(--card); border: 1px solid var(--rule); border-left: 4px solid var(--teal); border-radius: 10px; padding: 10px 14px; }
+.todo-item.SECURITY { border-left-color: var(--red); }
+.todo-item.CONFLICT { border-left-color: var(--amber); }
+.todo-item .t { font-weight: 500; }
+.todo-item .d { color: var(--muted); font-size: 13px; }
+.badge { display: inline-block; font-size: 10.5px; font-weight: 600; letter-spacing: .04em; padding: 2px 8px; border-radius: 999px; text-transform: uppercase; vertical-align: 1px; white-space: nowrap; }
+.b-red { background: var(--red-soft); color: var(--red); }
+.b-amber { background: var(--amber-soft); color: var(--amber); }
+.b-teal { background: var(--teal-soft); color: var(--teal); }
+.b-green { background: var(--green-soft); color: var(--green); }
+.b-grey { background: var(--chip); color: var(--muted); }
+.topics { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 14px; }
+.topic { background: var(--card); border: 1px solid var(--rule); border-radius: 12px; overflow: hidden; }
+.topic-h { padding: 12px 16px; border-bottom: 1px solid var(--rule); display: flex; justify-content: space-between; gap: 8px; align-items: center; }
+.topic-h .name { font-weight: 600; }
+.doc { padding: 10px 16px; border-bottom: 1px solid var(--rule); }
+.doc:last-child { border-bottom: 0; }
+.doc.win { background: var(--teal-soft); }
+.doc .row1 { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; }
+.doc .title { font-weight: 500; overflow-wrap: anywhere; }
+.doc.dim .title { color: var(--muted); font-weight: 400; }
+.doc .sub { font-size: 12px; color: var(--muted); }
+.doc .flag { font-size: 12px; margin-top: 4px; }
+.downloads { display: flex; flex-wrap: wrap; gap: 10px; }
+details { background: var(--card); border: 1px solid var(--rule); border-radius: 12px; padding: 12px 16px; margin-top: 28px; }
+summary { cursor: pointer; font-weight: 600; }
+table { border-collapse: collapse; width: 100%; font-size: 13px; margin-top: 10px; }
+th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--rule); vertical-align: top; }
+th { font-size: 11px; color: var(--teal); letter-spacing: .06em; text-transform: uppercase; font-weight: 600; }
+footer { color: var(--muted); font-size: 12px; padding: 0 0 32px; }
+
+.hero .btn-ghost { text-decoration: none; display: inline-block; }
+.step { margin-top: 32px; }
+.step-h { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; margin: 0 0 10px; font-size: 20px; font-weight: 600; }
+.step-h .num { color: var(--teal); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; font-weight: 600; }
+.chat { background: var(--card); border: 1px solid var(--rule); border-radius: 12px; padding: 16px; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0 12px; }
+.chip { font: 400 12px Poppins, system-ui, sans-serif; padding: 3px 10px; border-radius: 999px; background: var(--chip); color: var(--ink); border: 1px solid var(--rule); overflow-wrap: anywhere; }
+.chip.t1 { background: var(--green-soft); color: var(--green); border-color: transparent; }
+.chip.t2 { background: var(--amber-soft); color: var(--amber); border-color: transparent; }
+.chip.t3 { background: var(--teal-soft); color: var(--teal); border-color: transparent; }
+.chip.out { background: var(--red-soft); color: var(--red); border-color: transparent;  }
+.chip.cite { background: var(--teal-soft); color: var(--teal); border-color: transparent; font-size: 11px; padding: 1px 8px; vertical-align: 1px; }
+button.suggest { cursor: pointer; background: var(--card); } button.suggest:hover { border-color: var(--teal); }
+.label { font-size: 11px; font-weight: 600; letter-spacing: .06em; color: var(--muted); text-transform: uppercase; margin-top: 10px; }
+.msgs { display: flex; flex-direction: column; gap: 12px; margin: 12px 0; max-height: 560px; overflow-y: auto; }
+.msg { padding: 10px 14px; border-radius: 12px; overflow-wrap: anywhere; }
+.msg.user { background: var(--navy); color: #fff; align-self: flex-end; max-width: 88%; }
+.msg.bot { background: var(--bg); border: 1px solid var(--rule); }
+.msg.bot p { margin: 0 0 8px; } .msg.bot p:last-of-type { margin-bottom: 0; }
+.conflict { background: var(--amber-soft); color: var(--amber); border-left: 3px solid var(--amber); padding: 6px 10px; border-radius: 6px; margin: 8px 0; }
+.tag { margin-top: 10px; font-size: 11.5px; color: var(--muted); }
+.msg.err { background: var(--red-soft); color: var(--red); border: 0; }
+.ask { display: flex; gap: 8px; }
+.ask input[type=text] { flex: 1; min-width: 0; font: inherit; padding: 9px 12px; border-radius: 8px; border: 1px solid var(--rule); background: var(--card); color: var(--ink); }
+.ask input[type=text]:focus, button:focus-visible, .btn:focus-visible, input:focus-visible { outline: 2px solid var(--teal); outline-offset: 1px; }
+button:disabled { opacity: .55; cursor: wait; }
+.skeleton { color: var(--muted); font-style: italic; }
+footer { padding-top: 8px; }
+</style>
+</head>
+<body>
+<header class="hero">
+  <div class="wrap">
+    <div class="eyebrow">Proof of concept · fictional data</div>
+    <h1>Ask the Brain</h1>
+    <p class="lead">Load a Drive folder, see which document the Brain should trust on each topic, then ask questions. Answers come only from approved docs, with citations and conflict warnings.</p>
+    <div class="controls">
+      <div class="field"><label for="asof">Check as of</label><input type="date" id="asof"></div>
+      <button class="btn-primary" id="runSample">Load sample Drive folder</button>
+      <label class="btn btn-ghost" for="folder">Upload Drive folder</label>
+      <input type="file" id="folder" webkitdirectory multiple>
+      <a class="btn btn-ghost" href="cloudasta-drive-sample.zip" download>Download sample folder (.zip)</a>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+  <div id="notices"></div>
+  <div id="out"><div class="empty">Click <b>Load sample Drive folder</b> to try it instantly, or upload a folder of <code>.md</code>/<code>.txt</code> docs that start with a metadata header (download the sample .zip to see the format).<br>Sorting runs in your browser. Asking a question sends the folder's text to this site's server, which re-checks everything itself.</div></div>
+
+  <section class="step" id="step2" hidden>
+    <h2 class="step-h"><span class="num">Step 2</span> Ask the Brain</h2>
+    <div class="chat">
+      <div class="label" style="margin-top:0">The Brain can see</div>
+      <div class="chips" id="seen"></div>
+      <div class="label">Kept out</div>
+      <div class="chips" id="kept"></div>
+      <div class="label">Try a question</div>
+      <div class="chips" id="suggest"></div>
+      <div class="msgs" id="msgs" aria-live="polite"></div>
+      <form class="ask" id="askForm">
+        <input type="text" id="q" maxlength="600" placeholder="Ask about pricing, SOPs, policies…" aria-label="Your question" autocomplete="off">
+        <button class="btn-primary" id="send" type="submit">Ask</button>
+      </form>
+    </div>
+  </section>
+
+  <details>
+    <summary>How it decides which document wins</summary>
+    <table>
+      <tr><th>Rank</th><th>Source</th><th>Rule</th></tr>
+      <tr><td>1</td><td>Approved canonical doc, reviewed in the last 365 days</td><td>Wins by default.</td></tr>
+      <tr><td>2</td><td>Meet transcript with a recorded decision, last 90 days</td><td>Never silently overrides #1. If newer than the canonical doc, the answer comes from #1 with a conflict warning naming the owner.</td></tr>
+      <tr><td>3</td><td>Working docs and decks (and canonical docs overdue for review)</td><td>Context only, labeled unapproved.</td></tr>
+      <tr><td>4</td><td>Legacy docs, PDFs, exports, drafts untouched 540+ days</td><td>Only if nothing above exists.</td></tr>
+      <tr><td>5</td><td>Archived</td><td>Excluded entirely.</td></tr>
+    </table>
+    <p class="meta" style="margin-top:10px">Security: client data shared "anyone with link" is blocked from the Brain until fixed; client data open company-wide is flagged. The server re-runs these rules on the files it receives, so a blocked doc never reaches the model even if a request is tampered with.</p>
+    <p class="meta">There is no vector database. In real Gemini Enterprise, Google's built-in, permission-aware connector index does retrieval; this prototype skips retrieval because ~15 docs fit in one prompt, so the server sends only the approved docs straight into it. The value is in curating <i>what</i> gets connected.</p>
+  </details>
+</main>
+<footer class="wrap">Built by Pranav Singh for the Founders AI Associate assessment · Proof of concept · All data is fictional.</footer>
+
+<script type="module">
+import { auditFolder, buildContext, checkLimits, parseDate, fmtDay, TIER_NAMES } from "./brain.js";
+import { SAMPLE_FILES } from "./sample-drive.js";
+
+const SAMPLE_DATE = "2026-10-28"; // sample docs are dated Oct 2026; pinning keeps the demo identical on any day
+const QUESTIONS = [
+  "What do we charge for a 300-seat Workspace migration?",
+  "How long are client office hours?",
+  "What are the steps for a Gemini Enterprise migration?",
+  "What did Acme say in their QBR?",
+  "What's our parental leave policy?",
+];
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const todayISO = () => { const d = new Date(); return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10); };
+
+let files = null, label = "", res = null, ctx = null, history = [], busy = false;
+
+function download(name, text) {
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([text], { type: "text/csv" }));
+  a.download = name; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+function flagBadge(f) {
+  const k = f.includes(":") ? f.split(":")[0] : f.split(" ")[0];
+  const cls = k.startsWith("SECURITY HIGH") ? "b-red" : k.startsWith("CONFLICT") || k.startsWith("STALE") || k.startsWith("NO CANONICAL") || k.startsWith("SECURITY MED") ? "b-amber"
+    : k.startsWith("DUPLICATE") ? "b-grey" : "b-teal";
+  return `<span class="badge ${cls}">${esc(k)}</span> ${esc(f.slice(k.length + 1).trim())}`;
+}
+function verdictBadge(v) {
+  const cls = v === "WINNER" ? "b-green" : v === "REVIEW" ? "b-amber" : "b-grey";
+  return `<span class="badge ${cls}">${esc(v === "WINNER" ? "Source of truth" : v.toLowerCase())}</span>`;
+}
+
+function run() {
+  const out = $("#out");
+  if (!files) return;
+  const today = parseDate($("#asof").value);
+  if (today == null) { out.innerHTML = `<div class="error">Pick a valid "Check as of" date.</div>`; $("#step2").hidden = true; return; }
+  try { res = auditFolder(files, today); }
+  catch (e) { res = null; out.innerHTML = `<div class="error">${esc(e.message)}</div>`; $("#step2").hidden = true; return; }
+  ctx = buildContext(res);
+  history = []; $("#msgs").innerHTML = "";
+  const s = res.stats;
+  let h = `<div class="step"><h2 class="step-h" style="margin-top:0"><span class="num">Step 1</span> Sort the folder</h2>
+    <div class="meta">Ran on <b>${esc(label)}</b> as of ${fmtDay(res.today)} · ${s.docs} docs across ${s.topics} topics</div>`;
+  const fix = [];
+  if (res.missingHeader.length) fix.push(`<b>Fix in your folder: missing header</b> (${res.missingHeader.length}). Treated as unapproved drafts with no topic:<br>${res.missingHeader.map(esc).join("<br>")}`);
+  if (res.problems.length) fix.push(`<b>Fix in your folder:</b><br>${res.problems.map(esc).join("<br>")}`);
+  if (fix.length) h += `<div class="note">${fix.join("<br><br>")}</div>`;
+  h += `<div class="tiles">
+    <div class="tile good"><div class="n">${s.winners}</div><div class="l">Docs safe to connect to Gemini</div></div>
+    <div class="tile"><div class="n">${s.superseded}</div><div class="l">Superseded or duplicate</div></div>
+    <div class="tile ${res.human.length ? "alert" : ""}"><div class="n">${res.human.length}</div><div class="l">Need a human today</div></div>
+    <div class="tile ${s.secHigh ? "alert" : ""}"><div class="n">${s.secHigh}</div><div class="l">Blocked for security</div></div>
+    <div class="tile"><div class="n">${s.archived}</div><div class="l">Archived, excluded</div></div>
+  </div>`;
+  h += `<h2>Needs a human today <small>send each to its owner</small></h2><div class="todo">`;
+  h += res.human.length ? res.human.map(([r, f]) => {
+    const k = f.split(":")[0].split(" ")[0];
+    return `<div class="todo-item ${esc(k)}"><div class="t">${flagBadge(f)}</div><div class="d">${esc(r.doc_id)} · ${esc(r.title)} · ${esc(r.topic)}</div></div>`;
+  }).join("") : `<div class="empty">Nothing needs attention.</div>`;
+  h += `</div>`;
+  if (res.dark.length) h += `<div class="note" style="margin-top:12px">The Brain can't answer these topics yet (nothing safe to connect): <b>${res.dark.map(esc).join(", ")}</b></div>`;
+  h += `<h2>By topic <small>which doc wins, and why the others don't</small></h2><div class="topics">`;
+  for (const [topic] of res.topics) {
+    const ds = res.sorted.filter(r => (r.topic.trim() || "(no topic)") === topic);
+    const inIndex = res.index.some(r => (r.topic.trim() || "(no topic)") === topic);
+    h += `<div class="topic"><div class="topic-h"><span class="name">${esc(topic)}</span>${inIndex ? `<span class="badge b-green">indexed</span>` : `<span class="badge b-red">not indexed</span>`}</div>`;
+    h += ds.map(r => `<div class="doc ${r._verdict === "WINNER" ? "win" : "dim"}">
+      <div class="row1"><span class="title">${esc(r.title)}</span>${r._verdict === "WINNER" && res.blocked(r) ? `<span class="badge b-red">Blocked until fixed</span>` : verdictBadge(r._verdict)}</div>
+      <div class="sub">${esc(r.doc_id)} · ${esc(TIER_NAMES[r._tier])} · ${esc(r.owner || "no owner")} · modified ${esc(r.last_modified || "?")}</div>
+      ${r._flags.filter(f => !f.startsWith("NOTE: archived")).map(f => `<div class="flag">${flagBadge(f)}</div>`).join("")}
+    </div>`).join("");
+    h += `</div>`;
+  }
+  h += `</div><h2>Downloads</h2><div class="downloads">
+    <button class="btn-plain" id="dlIndex">brain_index_v1.csv (connect these)</button>
+    <button class="btn-plain" id="dlReport">brain_audit_report.csv (every doc)</button></div></div>`;
+  out.innerHTML = h;
+  $("#dlIndex").onclick = () => download("brain_index_v1.csv", res.indexCSV);
+  $("#dlReport").onclick = () => download("brain_audit_report.csv", res.reportCSV);
+  showSeen(ctx.used, ctx.excluded);
+  $("#step2").hidden = false;
+}
+
+function tierClass(t) { return t === 1 ? "t1" : t === 2 ? "t2" : "t3"; }
+function showSeen(used, excluded) {
+  $("#seen").innerHTML = used.length ? used.map(d => {
+    const n = typeof d.tier === "number" ? d.tier : (d.tier.match(/^T(\d)/) || [])[1];
+    return `<span class="chip t${n <= 3 ? n : 3}" title="${esc(d.title)}">${esc(d.id)} · T${n}</span>`;
+  }).join("") : `<span class="meta">Nothing approved yet.</span>`;
+  $("#kept").innerHTML = excluded.length ? excluded.map(d => `<span class="chip out" title="${esc(d.title)}">${esc(d.id)} · ${esc(d.reason)}</span>`).join("") : `<span class="meta">Nothing excluded.</span>`;
+}
+
+// ---- chat -------------------------------------------------------------
+function renderAnswer(text, ids) {
+  const lines = esc(text).split(/\n+/).filter(l => l.trim());
+  return lines.map(l => {
+    let x = l.replace(/\*\*(.+?)\*\*/g, "<b>$1</b>");
+    x = x.replace(/\[([^\]\n]{1,200})\]/g, (m, inner) => ids.some(id => inner.trim().startsWith(id)) ? `<span class="chip cite">${inner}</span>` : m);
+    return /^\s*(⚠|&#9888;)\s*Conflict/i.test(l) ? `<div class="conflict">${x}</div>` : `<p>${x}</p>`;
+  }).join("");
+}
+function addMsg(cls, html) {
+  const d = document.createElement("div"); d.className = "msg " + cls; d.innerHTML = html;
+  $("#msgs").appendChild(d); d.scrollIntoView({ block: "nearest" }); return d;
+}
+async function ask(question) {
+  question = question.trim();
+  if (!question || busy || !res) return;
+  busy = true; $("#send").disabled = true; $("#q").value = "";
+  addMsg("user", esc(question));
+  const wait = addMsg("bot skeleton", "Looking through the approved docs…");
+  try {
+    const r = await fetch("/api/ask", { method: "POST", headers: { "content-type": "application/json" },
+      body: JSON.stringify({ files, asOf: $("#asof").value, question, history: history.slice(-8) }) });
+    let j = null; try { j = await r.json(); } catch {}
+    if (!r.ok || !j) { wait.className = "msg bot err"; wait.textContent = (j && j.error) || "Something went wrong. Try again."; return; }
+    const ids = j.usedDocs.map(d => d.id);
+    const tag = j.provider === "gemini" ? `Answered by Gemini (${esc(j.model)})`
+      : j.provider === "groq" ? `Answered by backup: Groq (${esc(j.model)})${j.fallbackReason ? ` · ${esc(j.fallbackReason)}` : ""}`
+      : "No model was called: nothing approved to answer from";
+    wait.className = "msg bot"; wait.innerHTML = renderAnswer(j.answer, ids) + `<div class="tag">${tag}</div>`;
+    showSeen(j.usedDocs, j.excludedDocs);
+    history.push({ role: "user", text: question }, { role: "assistant", text: j.answer.slice(0, 2000) });
+    history = history.slice(-8);
+  } catch {
+    wait.className = "msg bot err"; wait.textContent = "Couldn't reach the server. Check your connection and try again.";
+  } finally { busy = false; $("#send").disabled = false; wait.scrollIntoView({ block: "nearest" }); }
+}
+
+// ---- loading folders --------------------------------------------------
+function notices(html) { $("#notices").innerHTML = html; }
+function load(fs, name, date, skipped = []) {
+  const limit = checkLimits(fs);
+  if (limit) { files = null; res = null; $("#step2").hidden = true; $("#out").innerHTML = `<div class="error">${esc(limit)}</div>`; notices(""); return; }
+  files = fs; label = name; $("#asof").value = date;
+  notices(skipped.length ? `<div class="note">Skipped ${skipped.length} file${skipped.length > 1 ? "s" : ""}: only .md/.txt are read in this prototype.<br>${skipped.slice(0, 8).map(esc).join("<br>")}${skipped.length > 8 ? "<br>…" : ""}</div>` : "");
+  run();
+}
+$("#runSample").onclick = () => load(SAMPLE_FILES.map(f => ({ ...f })), "sample Drive folder (15 fictional docs)", SAMPLE_DATE);
+$("#folder").onchange = async e => {
+  const list = [...e.target.files]; e.target.value = "";
+  if (!list.length) return;
+  const rel = f => f.webkitRelativePath || f.name;
+  const visible = list.filter(f => !rel(f).split("/").some(s => s.startsWith(".")));
+  const readable = visible.filter(f => /\.(md|txt)$/i.test(f.name));
+  const skipped = visible.filter(f => !/\.(md|txt)$/i.test(f.name)).map(rel);
+  if (!readable.length) { files = null; $("#step2").hidden = true; notices(""); $("#out").innerHTML = `<div class="error">No .md or .txt files found in that folder.${skipped.length ? ` Skipped ${skipped.length} other file${skipped.length > 1 ? "s" : ""}: only .md/.txt are read in this prototype.` : ""}</div>`; return; }
+  if (readable.length > 60) { files = null; $("#step2").hidden = true; notices(""); $("#out").innerHTML = `<div class="error">That folder has ${readable.length} readable files; this prototype handles up to 60.</div>`; return; }
+  const fs = await Promise.all(readable.map(async f => ({ name: rel(f), text: await f.text() })));
+  load(fs, `uploaded folder (${list[0].webkitRelativePath.split("/")[0] || "files"})`, todayISO(), skipped);
+};
+$("#asof").value = todayISO();
+$("#asof").onchange = run;
+$("#suggest").innerHTML = QUESTIONS.map(q => `<button type="button" class="chip suggest">${esc(q)}</button>`).join("");
+$("#suggest").onclick = e => { const b = e.target.closest("button.suggest"); if (b) ask(b.textContent); };
+$("#askForm").onsubmit = e => { e.preventDefault(); ask($("#q").value); };
+</script>
+</body>
+</html>

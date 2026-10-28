@@ -1,0 +1,9 @@
+doc_id,title,type,topic,owner,last_modified,last_reviewed,status,sharing,client_data,has_decision
+E01,"Rates, discounts & ""special"" deals",doc,Discounts,cfo@x.com,10/01/2026,10/01/2026,canonical,restricted,no,no
+E02,Rates discounts special deals (2),doc,Discounts,ops@x.com,9/5/26,,draft,domain,yes,no
+E03,Discount call (Meet transcript),transcript,Discounts,ops@x.com,2026-10-20,,draft,restricted,no,yes
+E04,Old vendor list,doc,Vendors,ops@x.com,,,draft,anyone_link,yes,no
+E05,Vendor list NEW,doc,Vendors,ops@x.com,2026-02-30,,draft,domain,no,no
+E06,Holiday calendar,export,,hr@x.com,2025-12-01,,draft,domain,no,no
+E07,Retired SOP,doc,Retired,hr@x.com,2020-01-01,,archived,domain,no,no
+E08,Board notes (Meet transcript),transcript,Board,ceo@x.com,2026-01-10,,draft,restricted,no,yes

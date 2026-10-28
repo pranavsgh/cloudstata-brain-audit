@@ -1,0 +1,356 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Brain Source-of-Truth Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --navy: #0A0E31; --teal: #00A3C4; --teal-soft: #E3F5F9;
+  --bg: #F6F7F9; --card: #FFFFFF; --ink: #1F2433; --muted: #6B7280; --rule: #E2E6EC;
+  --red: #C2362B; --red-soft: #FBEBEB; --amber: #A86A00; --amber-soft: #FBF1DC;
+  --green: #1E7D4F; --green-soft: #E5F4E4; --chip: #EEF1F5;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0D1020; --card: #151A30; --ink: #E7E9F2; --muted: #9AA1B5; --rule: #262C46;
+    --teal-soft: #0F2E3A; --red-soft: #3A1A1D; --amber-soft: #3A2C10; --green-soft: #12301F; --chip: #20263F;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0D1020; --card: #151A30; --ink: #E7E9F2; --muted: #9AA1B5; --rule: #262C46;
+  --teal-soft: #0F2E3A; --red-soft: #3A1A1D; --amber-soft: #3A2C10; --green-soft: #12301F; --chip: #20263F;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 400 14px/1.55 Poppins, system-ui, sans-serif; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 0 16px; }
+header.hero { background: var(--navy); color: #fff; padding: 36px 0 30px; }
+.eyebrow { font-size: 11px; font-weight: 600; letter-spacing: .08em; color: var(--teal); text-transform: uppercase; }
+h1 { font-weight: 600; font-size: clamp(26px, 4vw, 36px); margin: 6px 0 6px; line-height: 1.15; }
+.lead { color: #C9CEE3; font-weight: 300; max-width: 640px; margin: 0 0 22px; }
+.controls { display: flex; flex-wrap: wrap; gap: 10px; align-items: end; }
+.field { display: flex; flex-direction: column; gap: 4px; }
+.field label { font-size: 11px; font-weight: 600; letter-spacing: .06em; color: var(--teal); text-transform: uppercase; }
+input[type=date] { font: inherit; padding: 8px 10px; border-radius: 8px; border: 1px solid #3A4066; background: #141a45; color: #fff; color-scheme: dark; }
+button, .btn { font: 500 14px Poppins, system-ui, sans-serif; border-radius: 8px; padding: 9px 16px; cursor: pointer; border: 1px solid transparent; }
+.btn-primary { background: var(--teal); color: #04212A; }
+.btn-primary:hover { filter: brightness(1.08); }
+.btn-ghost { background: transparent; color: #fff; border-color: #3A4066; }
+.btn-ghost:hover { border-color: var(--teal); }
+.btn-plain { background: var(--card); color: var(--ink); border-color: var(--rule); }
+.btn-plain:hover { border-color: var(--teal); }
+input[type=file] { display: none; }
+main { padding: 24px 0 48px; }
+.empty { background: var(--card); border: 1px dashed var(--rule); border-radius: 12px; padding: 28px; text-align: center; color: var(--muted); }
+.error { background: var(--red-soft); color: var(--red); border-radius: 10px; padding: 12px 16px; margin-bottom: 16px; white-space: pre-wrap; }
+.note { background: var(--amber-soft); color: var(--amber); border-radius: 10px; padding: 10px 16px; margin-bottom: 16px; font-size: 13px; }
+.meta { color: var(--muted); font-size: 13px; margin: 4px 0 14px; }
+.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 24px; }
+.tile { background: var(--card); border: 1px solid var(--rule); border-radius: 12px; padding: 14px 16px; }
+.tile .n { font-size: 28px; font-weight: 600; line-height: 1.1; }
+.tile .l { font-size: 12px; color: var(--muted); }
+.tile.alert .n { color: var(--red); }
+.tile.good .n { color: var(--green); }
+h2 { font-size: 18px; font-weight: 600; margin: 28px 0 10px; }
+h2 small { font-weight: 400; color: var(--muted); font-size: 13px; margin-left: 6px; }
+.todo { display: grid; gap: 8px; }
+.todo-item { background: var(--card); border: 1px solid var(--rule); border-left: 4px solid var(--teal); border-radius: 10px; padding: 10px 14px; }
+.todo-item.SECURITY { border-left-color: var(--red); }
+.todo-item.CONFLICT { border-left-color: var(--amber); }
+.todo-item .t { font-weight: 500; }
+.todo-item .d { color: var(--muted); font-size: 13px; }
+.badge { display: inline-block; font-size: 10.5px; font-weight: 600; letter-spacing: .04em; padding: 2px 8px; border-radius: 999px; text-transform: uppercase; vertical-align: 1px; white-space: nowrap; }
+.b-red { background: var(--red-soft); color: var(--red); }
+.b-amber { background: var(--amber-soft); color: var(--amber); }
+.b-teal { background: var(--teal-soft); color: var(--teal); }
+.b-green { background: var(--green-soft); color: var(--green); }
+.b-grey { background: var(--chip); color: var(--muted); }
+.topics { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 14px; }
+.topic { background: var(--card); border: 1px solid var(--rule); border-radius: 12px; overflow: hidden; }
+.topic-h { padding: 12px 16px; border-bottom: 1px solid var(--rule); display: flex; justify-content: space-between; gap: 8px; align-items: center; }
+.topic-h .name { font-weight: 600; }
+.doc { padding: 10px 16px; border-bottom: 1px solid var(--rule); }
+.doc:last-child { border-bottom: 0; }
+.doc.win { background: var(--teal-soft); }
+.doc .row1 { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; }
+.doc .title { font-weight: 500; overflow-wrap: anywhere; }
+.doc.dim .title { color: var(--muted); font-weight: 400; }
+.doc .sub { font-size: 12px; color: var(--muted); }
+.doc .flag { font-size: 12px; margin-top: 4px; }
+.downloads { display: flex; flex-wrap: wrap; gap: 10px; }
+details { background: var(--card); border: 1px solid var(--rule); border-radius: 12px; padding: 12px 16px; margin-top: 28px; }
+summary { cursor: pointer; font-weight: 600; }
+table { border-collapse: collapse; width: 100%; font-size: 13px; margin-top: 10px; }
+th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--rule); vertical-align: top; }
+th { font-size: 11px; color: var(--teal); letter-spacing: .06em; text-transform: uppercase; font-weight: 600; }
+footer { color: var(--muted); font-size: 12px; padding: 0 0 32px; }
+</style>
+</head>
+<body>
+<header class="hero">
+  <div class="wrap">
+    <div class="eyebrow">Cloudasta's Brain · v1 tool</div>
+    <h1>Brain Source-of-Truth Tracker</h1>
+    <p class="lead">Upload a Drive inventory and see, for every topic, which document Gemini should trust, what's a duplicate or out of date, and what needs a human today.</p>
+    <div class="controls">
+      <div class="field"><label for="asof">Check as of</label><input type="date" id="asof"></div>
+      <button class="btn-primary" id="runSample">Run on sample inventory</button>
+      <label class="btn btn-ghost" for="file">Upload your CSV</label>
+      <input type="file" id="file" accept=".csv,text/csv">
+      <button class="btn-ghost" id="tmpl">Download template</button>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+  <div id="out"><div class="empty">Click <b>Run on sample inventory</b> to see it work on 13 example files, or upload your own inventory CSV.<br>Everything runs in your browser; nothing is uploaded anywhere.</div></div>
+
+  <details>
+    <summary>How it decides which document wins</summary>
+    <table>
+      <tr><th>Rank</th><th>Source</th><th>Rule</th></tr>
+      <tr><td>1</td><td>Approved canonical doc, reviewed in the last 365 days</td><td>Wins by default.</td></tr>
+      <tr><td>2</td><td>Meet transcript with a recorded decision, last 90 days</td><td>Never silently overrides #1. If newer than the canonical doc, it's flagged as a conflict for the owner.</td></tr>
+      <tr><td>3</td><td>Working docs and decks (and canonical docs overdue for review)</td><td>Context only, labeled unapproved.</td></tr>
+      <tr><td>4</td><td>Legacy docs, PDFs, exports, drafts untouched 540+ days</td><td>Only if nothing above exists.</td></tr>
+      <tr><td>5</td><td>Archived</td><td>Excluded entirely.</td></tr>
+    </table>
+    <p class="meta" style="margin-top:10px">Security check: client data shared "anyone with link" is blocked from the index until fixed; client data open company-wide is flagged. Ties within a rank go to the most recently modified doc.</p>
+  </details>
+</main>
+<footer class="wrap">Built by Pranav Singh for the Founders AI Associate assessment · Same rules as <code>brain_audit.py</code> · Sample data is fictional.</footer>
+
+<script>
+// ==LOGIC== (pure functions; mirrors brain_audit.py)
+const CANONICAL_REVIEW_DAYS = 365, TRANSCRIPT_FRESH_DAYS = 90, LEGACY_DAYS = 540;
+const REQUIRED = ["doc_id","title","type","topic","owner","last_modified","last_reviewed","status","sharing","client_data","has_decision"];
+const TIER_NAMES = {1:"T1 Approved canonical",2:"T2 Recent meeting decision",3:"T3 Working doc / deck",4:"T4 Legacy / PDF / export",5:"T5 Archived (excluded)"};
+
+function dayNum(y, m, d) {
+  const t = Date.UTC(y, m - 1, d), dt = new Date(t);
+  if (dt.getUTCFullYear() !== y || dt.getUTCMonth() !== m - 1 || dt.getUTCDate() !== d) return null;
+  return Math.round(t / 86400000);
+}
+function parseDate(s) {
+  s = (s || "").trim(); if (!s) return null; let m;
+  if ((m = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/))) return dayNum(+m[1], +m[2], +m[3]);
+  if ((m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/))) return dayNum(+m[3], +m[1], +m[2]);
+  if ((m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2})$/))) { const yy = +m[3]; return dayNum(yy < 69 ? 2000 + yy : 1900 + yy, +m[1], +m[2]); }
+  return null;
+}
+function fmtDay(n) { if (n == null) return ""; const d = new Date(n * 86400000); return d.toISOString().slice(0, 10); }
+function normTitle(t) {
+  t = t.toLowerCase();
+  t = t.replace(/copy of|\bfinal\b|\bnew\b|\bold\b|\(\d+\)|\bv\d+(\.\d+)?\b|\d{4}[-/]\d{2}[-/]\d{2}/g, " ");
+  t = t.replace(/[^a-z0-9]+/g, " ");
+  return t.split(/\s+/).filter(Boolean).join(" ");
+}
+function parseCSV(text) {
+  if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
+  const rows = []; let row = [], f = "", q = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (q) { if (c === '"') { if (text[i + 1] === '"') { f += '"'; i++; } else q = false; } else f += c; }
+    else if (c === '"') q = true;
+    else if (c === ",") { row.push(f); f = ""; }
+    else if (c === "\n" || c === "\r") { if (c === "\r" && text[i + 1] === "\n") i++; row.push(f); rows.push(row); row = []; f = ""; }
+    else f += c;
+  }
+  if (f !== "" || row.length) { row.push(f); rows.push(row); }
+  return rows.filter(r => !(r.length === 1 && r[0] === ""));
+}
+function toCSV(rows) {
+  return rows.map(r => r.map(v => { v = String(v ?? ""); return /[",\r\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; }).join(",")).join("\r\n") + "\r\n";
+}
+function assignTier(r, today) {
+  const status = r.status.trim().toLowerCase(), dtype = r.type.trim().toLowerCase(), mod = r._mod, rev = r._rev;
+  if (status === "archived") return [5, "archived"];
+  if (status === "canonical") {
+    if (rev != null && today - rev <= CANONICAL_REVIEW_DAYS) return [1, ""];
+    return [3, "canonical but review is overdue (demoted to T3)"];
+  }
+  if (dtype === "transcript") {
+    if (r.has_decision.trim().toLowerCase() === "yes" && mod != null && today - mod <= TRANSCRIPT_FRESH_DAYS) return [2, ""];
+    return [4, "transcript with no recent recorded decision"];
+  }
+  if (dtype === "pdf" || dtype === "export") return [4, ""];
+  if (mod != null && today - mod > LEGACY_DAYS) return [4, `untouched for ${today - mod} days`];
+  return [3, ""];
+}
+function audit(csvText, today) {
+  const table = parseCSV(csvText);
+  if (!table.length) throw new Error("The CSV is empty.");
+  const header = table[0].map(h => h.trim());
+  const missing = REQUIRED.filter(c => !header.includes(c));
+  if (missing.length) throw new Error("Your CSV is missing these columns: " + missing.join(", ") + "\nExpected: " + REQUIRED.join(", "));
+  const rows = table.slice(1).map(cells => { const o = {}; header.forEach((h, i) => o[h] = cells[i] ?? ""); return o; });
+  if (!rows.length) throw new Error("The CSV has no rows.");
+  const problems = [];
+  rows.forEach((r, i) => {
+    r._mod = parseDate(r.last_modified); r._rev = parseDate(r.last_reviewed);
+    if (r._mod == null) problems.push(`row ${i + 2} (${r.doc_id}): last_modified is blank/unreadable, treated as very old`);
+    r._flags = []; const [tier, note] = assignTier(r, today); r._tier = tier;
+    if (note) r._flags.push("NOTE: " + note);
+  });
+  const topics = new Map();
+  rows.forEach(r => { const k = r.topic.trim() || "(no topic)"; if (!topics.has(k)) topics.set(k, []); topics.get(k).push(r); });
+  const FAR = dayNum(1970, 1, 1), summary = [];
+  for (const [topic, docs] of topics) {
+    const live = docs.filter(d => d._tier !== 5);
+    docs.forEach(d => d._verdict = d._tier === 5 ? "EXCLUDED (archived)" : "");
+    if (!live.length) continue;
+    live.sort((a, b) => a._tier - b._tier || ((b._mod ?? FAR) - (a._mod ?? FAR)));
+    const winner = live[0]; winner._verdict = "WINNER";
+    const canon = live.filter(d => d._tier === 1), recent = live.filter(d => d._tier === 2);
+    if (canon.length && recent.length) {
+      const c = canon[0];
+      for (const t of recent) if (t._mod != null && c._mod != null && t._mod > c._mod) {
+        c._flags.push(`CONFLICT: meeting '${t.title}' (${fmtDay(t._mod)}) is newer than canonical '${c.title}' (${fmtDay(c._mod)}). Answer from canonical, show the warning, and ask ${c.owner} to confirm/update.`);
+        t._flags.push("PENDING: decision not yet written into the canonical doc");
+      }
+    } else if (!canon.length) {
+      const stale = live.filter(d => d.status.trim().toLowerCase() === "canonical");
+      if (stale.length) {
+        const s = stale[0];
+        winner._flags.push(`STALE CANONICAL: '${s.title}' review is overdue. Ask ${s.owner} to re-approve it or promote '${winner.title}'`);
+        summary.push([topic, "STALE CANONICAL"]);
+      } else if (recent.length) { winner._flags.push("NO CANONICAL: promote this decision into an approved doc"); summary.push([topic, "NO CANONICAL"]); }
+      else { winner._flags.push("NO CANONICAL: nominate an owner to approve a canonical doc"); summary.push([topic, "NO CANONICAL"]); }
+    }
+    const seen = new Map();
+    live.forEach(d => { const k = normTitle(d.title); if (!seen.has(k)) seen.set(k, []); seen.get(k).push(d); });
+    for (const g of seen.values()) if (g.length > 1) {
+      const keep = g[0];
+      g.slice(1).forEach(d => { d._flags.push(`DUPLICATE of '${keep.title}' (${keep.doc_id})`); if (!d._verdict) d._verdict = "SUPERSEDED (duplicate)"; });
+    }
+    live.forEach(d => { if (!d._verdict) d._verdict = d._tier >= winner._tier ? "SUPERSEDED" : "REVIEW"; });
+  }
+  rows.forEach(r => {
+    const sharing = r.sharing.trim().toLowerCase(), client = r.client_data.trim().toLowerCase() === "yes";
+    if (client && sharing === "anyone_link") r._flags.push("SECURITY HIGH: client data shared with anyone-with-link. Lock down BEFORE indexing");
+    else if (client && sharing === "domain") r._flags.push("SECURITY MED: client data open to whole company. Restrict to account team group");
+  });
+  const order = {"WINNER":0,"REVIEW":1,"SUPERSEDED":2,"SUPERSEDED (duplicate)":3,"EXCLUDED (archived)":4};
+  const sorted = rows.map((r, i) => [r, i]).sort((a, b) => {
+    const ta = a[0].topic, tb = b[0].topic;
+    if (ta !== tb) return ta < tb ? -1 : 1;
+    return ((order[a[0]._verdict] ?? 9) - (order[b[0]._verdict] ?? 9)) || (a[1] - b[1]);
+  }).map(x => x[0]);
+  const blocked = r => r._flags.some(f => f.startsWith("SECURITY HIGH"));
+  const index = rows.filter(r => r._verdict === "WINNER" && !blocked(r));
+  const indexed = new Set(index.map(r => r.topic.trim() || "(no topic)"));
+  const dark = [...topics.entries()].filter(([t, ds]) => !indexed.has(t) && ds.some(d => d._tier !== 5)).map(([t]) => t).sort();
+  const human = [];
+  sorted.forEach(r => r._flags.forEach(f => { if (/^(CONFLICT|SECURITY HIGH|NO CANONICAL|STALE CANONICAL)/.test(f)) human.push([r, f]); }));
+  const reportCSV = toCSV([["topic","doc_id","title","type","tier","verdict","owner","last_modified","flags"],
+    ...sorted.map(r => [r.topic, r.doc_id, r.title, r.type, TIER_NAMES[r._tier], r._verdict, r.owner, r.last_modified, r._flags.join(" | ")])]);
+  const indexCSV = toCSV([["topic","doc_id","title","tier","owner","last_modified"],
+    ...index.map(r => [r.topic, r.doc_id, r.title, TIER_NAMES[r._tier], r.owner, r.last_modified])]);
+  const count = p => rows.filter(p).length;
+  return { today, rows, sorted, topics, index, dark, human, problems, reportCSV, indexCSV,
+    stats: { docs: rows.length, topics: topics.size, winners: index.length,
+      superseded: count(r => r._verdict.startsWith("SUPERSEDED")), archived: count(r => r._tier === 5),
+      noCanon: summary.filter(s => s[1] === "NO CANONICAL").length, stale: summary.filter(s => s[1] === "STALE CANONICAL").length,
+      conflicts: count(r => r._flags.some(f => f.startsWith("CONFLICT"))), secHigh: count(blocked),
+      secMed: count(r => r._flags.some(f => f.startsWith("SECURITY MED"))) } };
+}
+// ==END LOGIC==
+
+const SAMPLE_CSV = `doc_id,title,type,topic,owner,last_modified,last_reviewed,status,sharing,client_data,has_decision
+D01,Pricing Framework 2026,doc,Pricing,ceo@cloudasta.com,2026-03-02,2026-03-02,canonical,domain,no,no
+D02,Copy of Pricing Framework 2026,doc,Pricing,sales1@cloudasta.com,2026-04-11,,draft,domain,no,no
+D03,Pricing Framework 2024 FINAL,pdf,Pricing,ceo@cloudasta.com,2024-01-15,,legacy,domain,no,no
+D04,Leadership sync - pricing change (Meet transcript),transcript,Pricing,ops@cloudasta.com,2026-10-14,,draft,restricted,no,yes
+D05,GE Migration SOP,doc,Migration SOP,eng-lead@cloudasta.com,2025-06-10,2025-06-10,canonical,domain,no,no
+D06,GE Migration SOP v2 (working),doc,Migration SOP,eng2@cloudasta.com,2026-09-20,,draft,domain,no,no
+D07,Acme Corp QBR notes Q3,doc,Acme QBR,am1@cloudasta.com,2026-09-30,2026-09-30,canonical,anyone_link,yes,no
+D08,Acme Corp QBR deck Q3,slides,Acme QBR,am1@cloudasta.com,2026-09-28,,draft,domain,yes,no
+D09,Proposal template - Workspace migration,slides,Proposal template,sales1@cloudasta.com,2026-07-01,,draft,domain,no,no
+D10,Proposal template - Workspace migration (1),slides,Proposal template,sales2@cloudasta.com,2026-05-12,,draft,domain,no,no
+D11,Onboarding checklist 2023,doc,Onboarding,hr@cloudasta.com,2023-02-01,,archived,domain,no,no
+D12,Onboarding checklist,doc,Onboarding,hr@cloudasta.com,2026-08-15,2026-08-15,canonical,domain,no,no
+D13,All-hands Meet transcript Sept,transcript,Onboarding,ceo@cloudasta.com,2026-09-05,,draft,domain,no,no
+`;
+const SAMPLE_DATE = "2026-10-27";
+
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const todayISO = () => { const d = new Date(); return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10); };
+let lastCSV = null, lastName = "";
+
+function download(name, text) {
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([text], { type: "text/csv" }));
+  a.download = name; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+function flagBadge(f) {
+  const k = f.includes(":") ? f.split(":")[0] : f.split(" ")[0];
+  const cls = k.startsWith("SECURITY HIGH") ? "b-red" : k.startsWith("CONFLICT") || k.startsWith("STALE") || k.startsWith("NO CANONICAL") || k.startsWith("SECURITY MED") ? "b-amber"
+    : k.startsWith("DUPLICATE") ? "b-grey" : "b-teal";
+  return `<span class="badge ${cls}">${esc(k)}</span> ${esc(f.slice(k.length + 1).trim())}`;
+}
+function verdictBadge(v) {
+  const cls = v === "WINNER" ? "b-green" : v === "REVIEW" ? "b-amber" : "b-grey";
+  return `<span class="badge ${cls}">${esc(v === "WINNER" ? "Source of truth" : v.toLowerCase())}</span>`;
+}
+function run() {
+  const out = $("#out");
+  if (!lastCSV) return;
+  const today = parseDate($("#asof").value);
+  if (today == null) { out.innerHTML = `<div class="error">Pick a valid "Check as of" date.</div>`; return; }
+  let res;
+  try { res = audit(lastCSV, today); }
+  catch (e) { out.innerHTML = `<div class="error">${esc(e.message)}</div><div class="empty">Tip: download the template and copy its header row into your sheet.</div>`; return; }
+  const s = res.stats;
+  let h = `<div class="meta">Ran on <b>${esc(lastName)}</b> as of ${fmtDay(res.today)} · ${s.docs} docs across ${s.topics} topics</div>`;
+  if (res.problems.length) h += `<div class="note"><b>Fix in your sheet:</b><br>${res.problems.map(esc).join("<br>")}</div>`;
+  h += `<div class="tiles">
+    <div class="tile good"><div class="n">${s.winners}</div><div class="l">Docs safe to connect to Gemini</div></div>
+    <div class="tile"><div class="n">${s.superseded}</div><div class="l">Superseded or duplicate</div></div>
+    <div class="tile ${res.human.length ? "alert" : ""}"><div class="n">${res.human.length}</div><div class="l">Need a human today</div></div>
+    <div class="tile ${s.secHigh ? "alert" : ""}"><div class="n">${s.secHigh}</div><div class="l">Blocked for security</div></div>
+    <div class="tile"><div class="n">${s.archived}</div><div class="l">Archived, excluded</div></div>
+  </div>`;
+  h += `<h2>Needs a human today <small>send each to its owner</small></h2><div class="todo">`;
+  h += res.human.length ? res.human.map(([r, f]) => {
+    const k = f.split(":")[0].split(" ")[0];
+    return `<div class="todo-item ${esc(k)}"><div class="t">${flagBadge(f)}</div><div class="d">${esc(r.doc_id)} · ${esc(r.title)} · ${esc(r.topic)}</div></div>`;
+  }).join("") : `<div class="empty">Nothing needs attention.</div>`;
+  h += `</div>`;
+  if (res.dark.length) h += `<div class="note" style="margin-top:12px">The Brain can't answer these topics yet (nothing safe to index): <b>${res.dark.map(esc).join(", ")}</b></div>`;
+  h += `<h2>By topic <small>which doc wins, and why the others don't</small></h2><div class="topics">`;
+  for (const [topic, docs] of res.topics) {
+    const ds = res.sorted.filter(r => (r.topic.trim() || "(no topic)") === topic);
+    const inIndex = res.index.some(r => (r.topic.trim() || "(no topic)") === topic);
+    h += `<div class="topic"><div class="topic-h"><span class="name">${esc(topic)}</span>${inIndex ? `<span class="badge b-green">indexed</span>` : `<span class="badge b-red">not indexed</span>`}</div>`;
+    h += ds.map(r => `<div class="doc ${r._verdict === "WINNER" ? "win" : "dim"}">
+      <div class="row1"><span class="title">${esc(r.title)}</span>${r._verdict === "WINNER" && r._flags.some(f => f.startsWith("SECURITY HIGH")) ? `<span class="badge b-red">Blocked until fixed</span>` : verdictBadge(r._verdict)}</div>
+      <div class="sub">${esc(r.doc_id)} · ${esc(TIER_NAMES[r._tier])} · ${esc(r.owner)} · modified ${esc(r.last_modified || "?")}</div>
+      ${r._flags.filter(f => !f.startsWith("NOTE: archived")).map(f => `<div class="flag">${flagBadge(f)}</div>`).join("")}
+    </div>`).join("");
+    h += `</div>`;
+  }
+  h += `</div><h2>Downloads</h2><div class="downloads">
+    <button class="btn-plain" id="dlIndex">brain_index_v1.csv (connect these)</button>
+    <button class="btn-plain" id="dlReport">brain_audit_report.csv (every doc)</button></div>`;
+  out.innerHTML = h;
+  $("#dlIndex").onclick = () => download("brain_index_v1.csv", res.indexCSV);
+  $("#dlReport").onclick = () => download("brain_audit_report.csv", res.reportCSV);
+}
+$("#asof").value = SAMPLE_DATE;
+$("#asof").onchange = run;
+$("#runSample").onclick = () => { lastCSV = SAMPLE_CSV; lastName = "sample inventory (13 fictional docs)"; $("#asof").value = SAMPLE_DATE; run(); };
+$("#file").onchange = e => {
+  const f = e.target.files[0]; if (!f) return;
+  const rd = new FileReader();
+  rd.onload = () => { lastCSV = rd.result; lastName = f.name; $("#asof").value = todayISO(); run(); };
+  rd.readAsText(f); e.target.value = "";
+};
+$("#tmpl").onclick = () => download("inventory_template.csv", SAMPLE_CSV.split("\n").slice(0, 2).join("\r\n") + "\r\n");
+</script>
+</body>
+</html>
